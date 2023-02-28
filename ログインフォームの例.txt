@@ -117,7 +117,7 @@
 
                 <button type="submit" id="login" name="login"><img src="img/login.png" alt="ログイン" width="99" height="43"></button>
                 
-                <p class="fz12">（注）通信状況により、スイッチ操作が出来ない・情報更新がされない場合がございます。<br>その際は、ブラウザの更新を行ってから再度お試しください。</p>
+               
                 
                 <p><a href="forgot.php">パスワードを忘れた方</a></p>
             </form>

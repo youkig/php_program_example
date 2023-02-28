@@ -80,14 +80,14 @@ $(function(){
                 mb_internal_encoding("UTF-8");
                 
                 $to = $_POST["email"];
-                $subject = "Wifi設定画面の登録完了のお知らせ";
+                $subject = "";
                 $message = $_POST["email"]."様\n\n";
                 $message .= "Wifi設定画面の登録が完了いたしました。\n";
                 $message .= "以下URLよりログインしてください。\n\n";
                 $message .= $esurl."login.php \n\n";
                 
-                $message .= "ログイン後、各種設定や商用電源切替器の運転状況を確認出来ます。\n";
-                $header = "From:info@iot-goods.com";
+                
+                $header = "From:";
                     if(mb_send_mail($to, $subject, $message, $header)){
                         echo "<p>自動返信メールを送信しました。</p>\n";
                         
@@ -95,8 +95,8 @@ $(function(){
                         $subject2 = "Wifi設定画面より登録完了のお知らせ";
                         $message2 = $_POST["email"]."様からWifi設定画面より\n";
                         $message2 .= "登録が完了いたしました。\n";
-                        $header2 = "From:info@iot-goods.com";
-                        $to2 = "To:ishibashi@autumn-tec.co.jp";
+                        $header2 = "From:";
+                        $to2 = "To:";
                         mb_send_mail($to2, $subject2, $message2, $header2);
                     }else{
                         echo "<p>自動返信メールの送信に失敗しました。</p>\n";
