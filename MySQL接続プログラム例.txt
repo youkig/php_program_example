@@ -1,0 +1,6 @@
+try{
+    $dbh = new PDO('mysql:host=127.0.0.1;dbname=iot-goods.com','root','Ja5pc9nTuMg');
+} catch (PDOException $e) {
+     echo "接続失敗: ". $e->getMessage(). "\n";
+    exit();
+}

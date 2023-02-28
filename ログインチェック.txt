@@ -1,0 +1,39 @@
+class LoginCh{
+    protected $userid;
+    protected $passwd;
+    protected $username;
+    protected $uimage;
+
+    public function logincheck($userid, $passwd){
+        $sql = "SELECT * From t_user Where email=:email and password=:passwd and valid=1";
+        $dbh2 = new PDO('mysql:host=127.0.0.1;dbname=iot-goods.com','root','Ja5pc9nTuMg');
+        $login = $dbh2->prepare($sql);
+        $login->bindValue(":email", $userid, PDO::PARAM_STR);
+        $login->bindValue(":passwd", $passwd, PDO::PARAM_STR);
+        $login->execute();
+        
+        
+        
+        if($result = $login->fetch(PDO::FETCH_ASSOC)){
+            //return $this->username = $result['name'];
+            $username = $result['name'];
+            $uimage = $result['image'];
+            return [$username,$uimage];
+        }else{
+            header("location: login.php");
+        }
+    }
+}
+
+
+
+<?php
+session_start();
+$user = new LoginCh;
+if(!empty($_SESSION["userid"]) && !empty($_SESSION["password"])){
+    //$username = $user->logincheck($_SESSION["userid"], $_SESSION["password"]);
+    list($username, $uimage) = $user->logincheck($_SESSION["userid"], $_SESSION["password"]);
+}else{
+    header("location: login.php");
+}
+?>

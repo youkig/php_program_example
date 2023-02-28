@@ -1,0 +1,127 @@
+<!doctype html>
+<?php include('config/config.php');?>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="content-language" content="ja">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+
+<title></title>
+
+
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/validationEngine.jquery.css" type="text/css"/>
+ <script type="text/javascript" src="js/jquery-3.6.0.js"></script>
+ <script type="text/javascript" src="js/languages/jquery.validationEngine-ja.js" charset="utf-8"></script>
+ <script type="text/javascript" src="js/jquery.validationEngine.js" charset="utf-8"></script>
+ <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="css/base.css" type="text/css">
+<script>
+    
+$(function(){
+  $("#form").validationEngine();
+});
+</script>
+
+</head>
+
+<body>
+
+    <?php include("include/header.php");?>
+    
+    <section>
+  
+    
+    <div id="regist" class="cnt">
+        <h2 class="fs-2">初期登録（登録完了）</h2>
+        
+        <div class="block">
+        <?php
+        
+        session_start();
+        if($_SESSION['crsf_token'] !== filter_input(INPUT_POST,"token")){
+            echo "<p>アクセスが不正です。</p>";
+        }else{
+            unset($_SESSION['crsf_token']);
+            if(isset($_POST["email"]) && isset($_POST["password"])){
+                $sql = "insert into t_user(name,email,password,password2,valid,indate)";
+                $sql .= " value (:name,:email,:password,:password2,:valid,:indate)";
+                $prepare = $dbh->prepare($sql);
+                $prepare->bindValue(':name', $_POST["name"], PDO::PARAM_STR);
+                $prepare->bindValue(':email', $_POST["email"], PDO::PARAM_STR);
+                $prepare->bindValue(':password', password_hash($_POST["password"], PASSWORD_DEFAULT), PDO::PARAM_STR);
+                $prepare->bindValue(':password2', $_POST["password"], PDO::PARAM_STR);
+                $prepare->bindValue(':valid', True, PDO::PARAM_BOOL);
+                $prepare->bindValue(':indate', date("Y/m/d H:i:s"), PDO::PARAM_STR);
+                $prepare->execute();
+                //エラー取得
+                //$result = $prepare-> errorinfo();
+                $result = $prepare->fetch(PDO::FETCH_ASSOC);
+                if(!$result){
+                echo "<p class='centering'>登録が完了しました。</p>";
+                unset($_SESSION['crsf_token']);
+                
+                //暗号化データの削除
+                if(!empty($_POST['eid'])){
+                $sql = "delete from t_encrypt Where email=:email";
+                $udelete = $dbh->prepare($sql);
+                $udelete->bindValue(":email",$_POST['email']);
+                $udelete->execute();
+                }
+                
+                //メール送信
+                mb_language("japanese");
+                mb_internal_encoding("UTF-8");
+                
+                $to = $_POST["email"];
+                $subject = "Wifi設定画面の登録完了のお知らせ";
+                $message = $_POST["email"]."様\n\n";
+                $message .= "Wifi設定画面の登録が完了いたしました。\n";
+                $message .= "以下URLよりログインしてください。\n\n";
+                $message .= $esurl."login.php \n\n";
+                
+                $message .= "ログイン後、各種設定や商用電源切替器の運転状況を確認出来ます。\n";
+                $header = "From:info@iot-goods.com";
+                    if(mb_send_mail($to, $subject, $message, $header)){
+                        echo "<p>自動返信メールを送信しました。</p>\n";
+                        
+                        //管理者へ
+                        $subject2 = "Wifi設定画面より登録完了のお知らせ";
+                        $message2 = $_POST["email"]."様からWifi設定画面より\n";
+                        $message2 .= "登録が完了いたしました。\n";
+                        $header2 = "From:info@iot-goods.com";
+                        $to2 = "To:ishibashi@autumn-tec.co.jp";
+                        mb_send_mail($to2, $subject2, $message2, $header2);
+                    }else{
+                        echo "<p>自動返信メールの送信に失敗しました。</p>\n";
+                    }
+                }else{
+                
+                echo "<p>登録失敗しました。</p>";
+                }
+            }else{
+            echo "<p class='centerign'>アクセスが不正です。</p>";
+            echo "<p class='centerign'><a href='{$esurl}regist01.php'>登録ページへ戻る</a></p>";
+            }
+        }
+         ?>
+        </div>
+       
+    
+    </div>
+        
+        
+      
+    </section>
+    
+    <?php include_once("include/footer.php");?>
+    
+
+</body>
+</html>

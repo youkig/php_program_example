@@ -1,0 +1,137 @@
+<!doctype html>
+<?php include('config/config.php');?>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="content-language" content="ja">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+
+<title></title>
+
+
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300&display=swap" rel="stylesheet">
+
+ <script type="text/javascript" src="js/jquery-3.6.0.js"></script>
+ <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="css/base.css" type="text/css">
+
+
+</head>
+
+<body>
+
+    <?php include("include/header.php");?>
+    
+    <section>
+  
+    
+    <div id="regist" class="cnt">
+        <h2>ログイン</h2>
+        <?php
+        
+        
+        if(isset($_POST["login"])){
+              if($_POST["username"]=="" || $_POST["password"]==""){
+                echo "<p>ユーザー名またはパスワードを入力してください。</p>";
+              }else{
+                $sql = "SELECT * From t_user Where email=:email and valid=1;";
+                $user = $dbh->prepare($sql);
+                $user->bindValue(':email', $_POST["username"], PDO::PARAM_STR);
+                $user->execute();
+                
+                 
+                if($result = $user->fetch(PDO::FETCH_ASSOC)){
+                    $pass = $result['password'];
+                    if(password_verify($_POST["password"],$pass)){
+                        //最終ログインタイムスタンプ
+                        $sql = "update t_user set lastdate=:lastdate Where id=:id;";
+                        $last = $dbh->prepare($sql);
+                        $last->bindValue(":lastdate", date("Y/m/d H:i:s"), PDO::PARAM_STR);
+                        $last->bindValue(":id", $result['id'], PDO::PARAM_INT);
+                        $last->execute();
+                        
+                        //count
+                        $sql = "select id From t_visit Where date=:date;";
+                        $date = $dbh->prepare($sql);
+                        $date -> bindValue(":date", date("Y-m-d"), PDO::PARAM_STR);
+                        $date -> execute();
+                        
+                     
+                        if($result2 = $date->fetch(PDO::FETCH_ASSOC)){
+                            $sql = "update t_visit set num = num + 1 Where id=:id;";
+                            $visit = $dbh->prepare($sql);
+                            $visit->bindValue(":id", $result2['id'], PDO::PARAM_INT);
+                            $visit->execute();
+                            
+                        }else{
+                            $sql = "insert into t_visit(date,num) value (:date,:num);";
+                            $visit = $dbh->prepare($sql);
+                            $visit->bindValue(":date", date("Y-m-d"), PDO::PARAM_STR);
+                            $visit->bindValue(":num", 1, PDO::PARAM_INT);
+                            $visit->execute();
+                           
+                        }
+                        
+                        session_start();
+                        //session_regenerate_id(true);
+                        $_SESSION["uid"] = $result['id'];
+                        $_SESSION["userid"] = $result['email'];
+                        $_SESSION["username"] = $result['name'];
+                        $_SESSION["password"] = $result['password'];
+                        //cookie
+                        setcookie("uid", $result['id'], time()+60*60*24*30);
+                        setcookie("userid", $result['email'], time()+60*60*24*30);
+                        setcookie("password", $result['password'], time()+60*60*24*30);
+                        header("location: monitor.php");
+                        exit();
+                    }else{
+                        echo "<p>パスワードが違います。</p>";
+                    }
+                    
+                }else{ 
+                    echo "<p>該当のユーザーが登録されておりません。</p>";
+                }
+              }
+          }
+         ?>
+        <div class="block">
+            <form action="<?php echo($esurl."login.php");?>" method="post" id="form">
+                <dl>
+                    <dt class="form-label">ユーザーID</dt>
+                    <dd><input type="text" name="username" id="username" value="" class="form-control form-control-lg validate[required] inputsize"></dd>
+                </dl>
+
+             
+
+                <dl>
+                    <dt class="form-label">パスワード</dt>
+                    <dd><input type="password" name="password" id="password" value="" class="form-control form-control-lg validate[required] inputsize"></dd>
+                </dl>
+
+
+                <button type="submit" id="login" name="login"><img src="img/login.png" alt="ログイン" width="99" height="43"></button>
+                
+                <p class="fz12">（注）通信状況により、スイッチ操作が出来ない・情報更新がされない場合がございます。<br>その際は、ブラウザの更新を行ってから再度お試しください。</p>
+                
+                <p><a href="forgot.php">パスワードを忘れた方</a></p>
+            </form>
+        </div>
+        
+    
+    </div>
+        
+        
+      
+    </section>
+    
+    <?php include_once("include/footer.php");?>
+    
+
+</body>
+</html>

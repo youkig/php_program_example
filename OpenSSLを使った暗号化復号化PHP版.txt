@@ -1,0 +1,37 @@
+//暗号化
+                        $ciphers = openssl_get_cipher_methods();
+                        //print_r($ciphers);
+                        $password = "PASSWORD"; //なんでもOK
+                        $method = 'AES-256-CBC';
+                        $iv_length = openssl_cipher_iv_length($method);
+                        $iv = openssl_random_pseudo_bytes($iv_length);
+                        $options = 0;
+                        $encrypted = openssl_encrypt($data, $method, $password, $options, $iv);
+                        $base64_iv=base64_encode($iv);
+               
+                        //暗号化DB登録
+                         $sql = "insert into t_encrypt(encrypted,iv,email) value (:encrypted,:iv,:email);";
+                         $ango = $dbh->prepare($sql);
+                         $ango->bindValue(":encrypted", $encrypted, PDO::PARAM_STR);
+                         $ango->bindValue(":iv", $base64_iv, PDO::PARAM_STR);
+                         $ango->bindValue(":email", $data, PDO::PARAM_STR);
+                         $ango->execute();
+
+
+//復号化
+			//DBに一時保存した「vi」を呼び出し、復号化に使用
+			$sql = "select * From t_encrypt Where encrypted=:encrypted;";
+                        $email = $dbh->prepare($sql);
+                        $email->bindValue(":encrypted", $data);
+                        $email->execute();
+
+                        if($result = $email->fetch(PDO::FETCH_ASSOC)){
+                            $iv = base64_decode($result['iv']);
+                            //$id = $result['id'];
+                            $ciphers = openssl_get_cipher_methods();
+                            //print_r($ciphers);
+                            $password = "PASSWORD";
+                            $method = 'AES-256-CBC';
+                            $options = 0;
+                            $decrypted = openssl_decrypt($data, $method, $password, $options, $iv);
+                        }
